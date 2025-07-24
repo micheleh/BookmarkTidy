@@ -14,9 +14,27 @@ const DEFAULT_SETTINGS = {
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('Bookmark Tidy installed');
   
-  // Set default settings
-  const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
-  await chrome.storage.sync.set(settings);
+  // Only set default settings if they don't exist yet
+  const existingSettings = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
+  const settingsToSet = {};
+  
+  // Only set defaults for missing settings
+  for (const [key, defaultValue] of Object.entries(DEFAULT_SETTINGS)) {
+    if (existingSettings[key] === undefined) {
+      settingsToSet[key] = defaultValue;
+      console.log(`Setting default for ${key}: ${defaultValue}`);
+    } else {
+      console.log(`Keeping existing setting ${key}: ${existingSettings[key]}`);
+    }
+  }
+  
+  // Only update storage if there are new settings to set
+  if (Object.keys(settingsToSet).length > 0) {
+    await chrome.storage.sync.set(settingsToSet);
+    console.log('Default settings applied:', settingsToSet);
+  } else {
+    console.log('All settings already exist, no defaults needed');
+  }
 });
 
 // Get current settings
@@ -483,7 +501,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     getSettings().then(sendResponse);
     return true;
   } else if (request.action === 'updateSettings') {
-    chrome.storage.sync.set(request.settings).then(() => {
+    // Handle individual setting updates from options page
+    const updateData = {};
+    updateData[request.key] = request.value;
+    chrome.storage.sync.set(updateData).then(() => {
+      console.log(`📝 Setting updated: ${request.key} = ${request.value}`);
       sendResponse({ success: true });
     });
     return true;

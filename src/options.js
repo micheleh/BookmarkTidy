@@ -52,14 +52,38 @@ class BookmarkTidy {
       this.checkDeadLinks();
     });
 
-    // Settings
-    document.getElementById('autoFolderSorting').addEventListener('change', (e) => {
+    // Settings - Add click handlers for toggle switches
+    const autoFolderToggle = document.getElementById('autoFolderSorting');
+    const sortByUseToggle = document.getElementById('sortByUse');
+    
+    // Add change event listeners
+    autoFolderToggle.addEventListener('change', (e) => {
       this.saveSetting('autoFolderSorting', e.target.checked);
     });
     
-    document.getElementById('sortByUse').addEventListener('change', (e) => {
+    sortByUseToggle.addEventListener('change', (e) => {
       this.saveSetting('sortByUse', e.target.checked);
     });
+    
+    // Add click handlers to the slider elements to properly toggle the checkboxes
+    const autoFolderSlider = autoFolderToggle.nextElementSibling;
+    const sortByUseSlider = sortByUseToggle.nextElementSibling;
+    
+    if (autoFolderSlider && autoFolderSlider.classList.contains('slider')) {
+      autoFolderSlider.addEventListener('click', (e) => {
+        e.preventDefault();
+        autoFolderToggle.checked = !autoFolderToggle.checked;
+        autoFolderToggle.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+    
+    if (sortByUseSlider && sortByUseSlider.classList.contains('slider')) {
+      sortByUseSlider.addEventListener('click', (e) => {
+        e.preventDefault();
+        sortByUseToggle.checked = !sortByUseToggle.checked;
+        sortByUseToggle.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
   }
 
   async loadSettings() {
