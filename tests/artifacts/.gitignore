@@ -1,0 +1,6 @@
+# Test artifacts directory
+# This directory contains temporary files generated during testing
+# All files in this directory should be ignored by git
+
+*
+!.gitignore

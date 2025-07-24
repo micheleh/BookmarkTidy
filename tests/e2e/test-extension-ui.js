@@ -193,8 +193,8 @@ async function testExtensionUI() {
     console.error('❌ Test failed:', error);
     
     // Take a screenshot on failure
-    await page.screenshot({ path: 'tests/extension-test-failure.png', fullPage: true });
-    console.log('📸 Screenshot saved as tests/extension-test-failure.png');
+    await page.screenshot({ path: 'tests/artifacts/extension-test-failure.png', fullPage: true });
+    console.log('📸 Screenshot saved as tests/artifacts/extension-test-failure.png');
   } finally {
     await context.close();
   }
