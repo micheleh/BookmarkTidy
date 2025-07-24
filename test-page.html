@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Tidy - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #3367d6; }
+        .bookmarks-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .bookmark-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .bookmark-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔖 Bookmark Tidy - Extension Test Page</h1>
+    
+    <div class="card">
+        <h2>Extension Status</h2>
+        <div id="extensionStatus" class="status info">
+            Checking extension status...
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Test Actions</h2>
+        <p>Use these buttons to test extension functionality:</p>
+        
+        <button onclick="testBookmarkAccess()">Test Bookmark Access</button>
+        <button onclick="openOptionsPage()">Open Options Page</button>
+        <button onclick="createTestBookmarks()">Create Test Bookmarks</button>
+        <button onclick="showBookmarks()">Show All Bookmarks</button>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <div class="card">
+        <h2>Test Bookmarks</h2>
+        <p>These are sample URLs you can bookmark to test duplicate detection and dead link checking:</p>
+        
+        <div class="bookmarks-list">
+            <div class="bookmark-item">
+                <strong>Working URLs:</strong><br>
+                <a href="https://www.google.com" target="_blank">https://www.google.com</a><br>
+                <a href="https://github.com" target="_blank">https://github.com</a><br>
+                <a href="https://stackoverflow.com" target="_blank">https://stackoverflow.com</a>
+            </div>
+            <div class="bookmark-item">
+                <strong>Duplicate URLs (bookmark these multiple times):</strong><br>
+                <a href="https://www.example.com" target="_blank">https://www.example.com</a><br>
+                <a href="https://httpbin.org/get" target="_blank">https://httpbin.org/get</a>
+            </div>
+            <div class="bookmark-item">
+                <strong>Potentially dead URLs:</strong><br>
+                <a href="https://thisdomaindoesnotexist12345.com" target="_blank">https://thisdomaindoesnotexist12345.com</a><br>
+                <a href="https://httpstat.us/404" target="_blank">https://httpstat.us/404</a><br>
+                <a href="https://httpstat.us/500" target="_blank">https://httpstat.us/500</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Manual Testing Checklist</h2>
+        <div class="bookmarks-list">
+            <div class="bookmark-item">
+                <input type="checkbox" id="check1"> 
+                <label for="check1">Extension appears in Chrome toolbar</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check2"> 
+                <label for="check2">Clicking extension icon shows popup</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check3"> 
+                <label for="check3">"Manage Bookmarks" button opens options page</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check4"> 
+                <label for="check4">Options page has three tabs (Duplicate Finder, Dead Link Checker, Settings)</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check5"> 
+                <label for="check5">Duplicate Finder can scan and find duplicates</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check6"> 
+                <label for="check6">Dead Link Checker can scan for dead links</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check7"> 
+                <label for="check7">Settings tab allows toggling automatic sorting</label>
+            </div>
+            <div class="bookmark-item">
+                <input type="checkbox" id="check8"> 
+                <label for="check8">Bookmarks can be deleted from duplicate/dead link results</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('extensionStatus');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsEl = document.getElementById('testResults');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            resultsEl.appendChild(div);
+        }
+
+        // Check if extension is available
+        if (typeof chrome !== 'undefined' && chrome.bookmarks) {
+            updateStatus('✅ Extension detected! Chrome APIs available.', 'success');
+        } else {
+            updateStatus('❌ Extension not detected or insufficient permissions.', 'warning');
+        }
+
+        function testBookmarkAccess() {
+            if (typeof chrome !== 'undefined' && chrome.bookmarks) {
+                chrome.bookmarks.getTree((tree) => {
+                    if (chrome.runtime.lastError) {
+                        addResult('❌ Error accessing bookmarks: ' + chrome.runtime.lastError.message, 'warning');
+                    } else {
+                        addResult('✅ Successfully accessed bookmark tree!', 'success');
+                        console.log('Bookmark tree:', tree);
+                    }
+                });
+            } else {
+                addResult('❌ Chrome bookmarks API not available', 'warning');
+            }
+        }
+
+        function openOptionsPage() {
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL('src/options.html')
+                });
+                addResult('✅ Opening options page...', 'success');
+            } else {
+                addResult('❌ Chrome runtime API not available', 'warning');
+            }
+        }
+
+        function createTestBookmarks() {
+            if (typeof chrome === 'undefined' || !chrome.bookmarks) {
+                addResult('❌ Chrome bookmarks API not available', 'warning');
+                return;
+            }
+
+            // Create a test folder
+            chrome.bookmarks.create({
+                title: 'Bookmark Tidy Test Folder'
+            }, (folder) => {
+                if (chrome.runtime.lastError) {
+                    addResult('❌ Error creating test folder: ' + chrome.runtime.lastError.message, 'warning');
+                    return;
+                }
+
+                const testBookmarks = [
+                    { title: 'Google', url: 'https://www.google.com' },
+                    { title: 'Google (Duplicate)', url: 'https://www.google.com' },
+                    { title: 'GitHub', url: 'https://github.com' },
+                    { title: 'Dead Link Test', url: 'https://thisdomaindoesnotexist12345.com' },
+                    { title: '404 Test', url: 'https://httpstat.us/404' }
+                ];
+
+                testBookmarks.forEach((bookmark, index) => {
+                    chrome.bookmarks.create({
+                        parentId: folder.id,
+                        title: bookmark.title,
+                        url: bookmark.url
+                    }, () => {
+                        if (index === testBookmarks.length - 1) {
+                            addResult('✅ Created test bookmarks in "Bookmark Tidy Test Folder"', 'success');
+                        }
+                    });
+                });
+            });
+        }
+
+        function showBookmarks() {
+            if (typeof chrome !== 'undefined' && chrome.bookmarks) {
+                chrome.bookmarks.getTree((tree) => {
+                    if (chrome.runtime.lastError) {
+                        addResult('❌ Error accessing bookmarks: ' + chrome.runtime.lastError.message, 'warning');
+                    } else {
+                        const bookmarkCount = countBookmarks(tree[0]);
+                        addResult(`✅ Found ${bookmarkCount} total bookmarks. Check console for details.`, 'success');
+                        console.log('All bookmarks:', tree);
+                    }
+                });
+            } else {
+                addResult('❌ Chrome bookmarks API not available', 'warning');
+            }
+        }
+
+        function countBookmarks(node) {
+            let count = 0;
+            if (node.url) count = 1;
+            if (node.children) {
+                node.children.forEach(child => {
+                    count += countBookmarks(child);
+                });
+            }
+            return count;
+        }
+    </script>
+</body>
+</html>

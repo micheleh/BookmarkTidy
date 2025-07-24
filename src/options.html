@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Tidy Options</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="tabs">
+        <button class="tab-button" data-tab="duplicates">Duplicate Finder</button>
+        <button class="tab-button" data-tab="deadlinks">Dead Link Checker</button>
+        <button class="tab-button" data-tab="settings">Settings</button>
+    </div>
+    <div class="tab-content">
+        <div id="duplicates" class="tab">
+            <h2>Duplicate Finder</h2>
+            <!-- Content for finding duplicates -->
+            <button id="findDuplicates">Find Duplicates</button>
+            <div id="duplicatesList"></div>
+        </div>
+        <div id="deadlinks" class="tab">
+            <h2>Dead Link Checker</h2>
+            <!-- Content for checking dead links -->
+            <button id="checkDeadLinks">Check Dead Links</button>
+            <div id="deadLinksList"></div>
+        </div>
+        <div id="settings" class="tab">
+            <h2>Settings</h2>
+            <p class="settings-description">Configure how Bookmark Tidy manages your bookmarks automatically.</p>
+            
+            <div class="form-group">
+                <label for="autoFolderSorting">Automatic Folder Sorting</label>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="autoFolderSorting">
+                    <span class="slider"></span>
+                </div>
+                <p class="form-description">Automatically organize folders alphabetically with subfolders at the top</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="sortByUse">Sort by Use (Most Recent First)</label>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="sortByUse">
+                    <span class="slider"></span>
+                </div>
+                <p class="form-description">Move bookmarks to the top of their folder when you visit them</p>
+            </div>
+        </div>
+    </div>
+    <script src="./options.js"></script>
+</body>
+</html>
