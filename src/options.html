@@ -8,9 +8,18 @@
 </head>
 <body>
     <div class="tabs">
-        <button class="tab-button" data-tab="duplicates">Duplicate Finder</button>
-        <button class="tab-button" data-tab="deadlinks">Dead Link Checker</button>
-        <button class="tab-button" data-tab="settings">Settings</button>
+        <button class="tab-button" data-tab="duplicates">
+            <span class="icon-duplicate"></span>
+            Duplicate Finder
+        </button>
+        <button class="tab-button" data-tab="deadlinks">
+            <span class="icon-dead-link"></span>
+            Dead Link Checker
+        </button>
+        <button class="tab-button" data-tab="settings">
+            <span class="icon-settings"></span>
+            Settings
+        </button>
     </div>
     <div class="tab-content">
         <div id="duplicates" class="tab">
@@ -29,22 +38,26 @@
             <h2>Settings</h2>
             <p class="settings-description">Configure how Bookmark Tidy manages your bookmarks automatically.</p>
             
-            <div class="form-group">
-                <label for="autoFolderSorting">Automatic Folder Sorting</label>
-                <div class="toggle-switch">
-                    <input type="checkbox" id="autoFolderSorting">
-                    <span class="slider"></span>
+            <div class="card">
+                <div class="card-content">
+                    <div class="form-group">
+                        <label class="form-label" for="autoFolderSorting">Automatic Folder Sorting</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="autoFolderSorting">
+                            <span class="slider"></span>
+                        </div>
+                        <p class="form-description">Automatically organize folders alphabetically with subfolders at the top</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="sortByUse">Sort by Use (Most Recent First)</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="sortByUse">
+                            <span class="slider"></span>
+                        </div>
+                        <p class="form-description">Move bookmarks to the top of their folder when you visit them</p>
+                    </div>
                 </div>
-                <p class="form-description">Automatically organize folders alphabetically with subfolders at the top</p>
-            </div>
-            
-            <div class="form-group">
-                <label for="sortByUse">Sort by Use (Most Recent First)</label>
-                <div class="toggle-switch">
-                    <input type="checkbox" id="sortByUse">
-                    <span class="slider"></span>
-                </div>
-                <p class="form-description">Move bookmarks to the top of their folder when you visit them</p>
             </div>
         </div>
     </div>
