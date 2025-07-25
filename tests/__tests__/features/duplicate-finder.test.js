@@ -245,6 +245,200 @@ async function testDuplicatesButtonStates() {
   }
 }
 
+async function testDuplicateRemovalVerificationSelected() {
+  console.log('🚀 Testing duplicate removal verification - Remove Selected...');
+  
+  let context, page;
+  
+  try {
+    ({ context, page } = await launchExtensionBrowser());
+    
+    // Add bookmarks with multiple duplicate groups (4 groups)
+    const multipleGroupsSet = [
+      { title: 'Google - First', url: 'https://www.google.com' },
+      { title: 'Google - Duplicate', url: 'https://www.google.com' },
+      { title: 'GitHub - Original', url: 'https://github.com' },
+      { title: 'GitHub - Copy', url: 'https://github.com' },
+      { title: 'Example Site', url: 'https://example.com' },
+      { title: 'Example Copy', url: 'https://example.com' },
+      { title: 'Stack Overflow - Main', url: 'https://stackoverflow.com' },
+      { title: 'Stack Overflow - Dup', url: 'https://stackoverflow.com' }
+    ];
+    
+    await page.goto('https://www.google.com');
+    console.log('📚 Adding test bookmarks with multiple duplicate groups...');
+    await addBookmarks(context, multipleGroupsSet);
+    
+    await navigateToOptionsPage(page, context);
+    await page.locator('[data-tab="duplicates"]').click();
+    await page.waitForTimeout(500);
+
+    // First scan - should find 4 duplicate groups
+    console.log('🔍 Running initial duplicate scan...');
+    await page.locator('#findDuplicates').click();
+    await page.waitForTimeout(3000);
+    
+    const initialGroupCount = await page.locator('.duplicate-group').count();
+    console.log(`📊 Initial duplicate groups found: ${initialGroupCount}`);
+    
+    if (initialGroupCount !== 4) {
+      console.log(`❌ Expected 4 duplicate groups, found ${initialGroupCount}`);
+      return false;
+    }
+    
+    // Select duplicates from only 2 groups (partial selection)
+    console.log('✅ Selecting duplicates from 2 groups for removal...');
+    const duplicateGroups = await page.locator('.duplicate-group').all();
+    
+    if (duplicateGroups.length < 2) {
+      console.log(`❌ Not enough duplicate groups found: ${duplicateGroups.length}`);
+      return false;
+    }
+    
+    // Select one checkbox from each of the first 2 duplicate groups
+    for (let i = 0; i < 2; i++) {
+      const groupCheckboxes = await duplicateGroups[i].locator('.duplicate-checkbox').all();
+      if (groupCheckboxes.length > 0) {
+        await groupCheckboxes[0].check(); // Select the first checkbox in this group
+        console.log(`✅ Selected 1 checkbox from group ${i + 1}`);
+      }
+    }
+    await page.waitForTimeout(500);
+    
+    // Remove selected duplicates
+    const removeSelectedBtn = page.locator('#removeSelectedDuplicates');
+    if (!(await removeSelectedBtn.isVisible())) {
+      console.log('❌ Remove Selected button not visible');
+      return false;
+    }
+    
+    // Set up dialog handler to auto-accept confirmation
+    console.log('🗑️ Setting up dialog handler and removing selected duplicates...');
+    page.on('dialog', async dialog => {
+      console.log(`✅ Dialog appeared: ${dialog.message()}`);
+      await dialog.accept();
+    });
+    
+    await removeSelectedBtn.click();
+    await page.waitForTimeout(5000); // Extra wait for removal and re-scan to complete
+    
+    // Second scan - should find fewer duplicate groups
+    console.log('🔍 Running second duplicate scan to verify removal...');
+    await page.locator('#findDuplicates').click();
+    await page.waitForTimeout(3000);
+    
+    const finalGroupCount = await page.locator('.duplicate-group').count();
+    console.log(`📊 Duplicate groups after removal: ${finalGroupCount}`);
+    
+    // Should have 2 groups remaining (4 initial - 2 removed)
+    if (finalGroupCount !== 2) {
+      console.log(`❌ Expected 2 remaining duplicate groups, found ${finalGroupCount}`);
+      return false;
+    }
+    
+    console.log('✅ Duplicate removal verification - Remove Selected completed successfully');
+    console.log(`   Initial groups: ${initialGroupCount}, Final groups: ${finalGroupCount}`);
+    
+    await cleanupAllTestBookmarks(context);
+    return true;
+
+  } catch (error) {
+    await captureFailureScreenshot(page, 'duplicate-removal-verification-selected', error);
+    return false;
+  } finally {
+    if (context) {
+      await context.close();
+    }
+  }
+}
+
+async function testDuplicateRemovalVerificationAll() {
+  console.log('🚀 Testing duplicate removal verification - Remove All...');
+  
+  let context, page;
+  
+  try {
+    ({ context, page } = await launchExtensionBrowser());
+    
+    // Add bookmarks with known duplicates
+    await page.goto('https://www.google.com');
+    console.log('📚 Adding test bookmarks with duplicates...');
+    await addBookmarks(context, getBookmarkSet('withDuplicates'));
+    
+    await navigateToOptionsPage(page, context);
+    await page.locator('[data-tab="duplicates"]').click();
+    await page.waitForTimeout(500);
+
+    // First scan - should find 3 duplicate groups
+    console.log('🔍 Running initial duplicate scan...');
+    await page.locator('#findDuplicates').click();
+    await page.waitForTimeout(3000);
+    
+    const initialGroupCount = await page.locator('.duplicate-group').count();
+    console.log(`📊 Initial duplicate groups found: ${initialGroupCount}`);
+    
+    if (initialGroupCount === 0) {
+      console.log('❌ No duplicate groups found in initial scan');
+      return false;
+    }
+    
+    // Remove all duplicates
+    const removeAllBtn = page.locator('#removeAllDuplicates');
+    if (!(await removeAllBtn.isVisible())) {
+      console.log('❌ Remove All Duplicates button not visible');
+      return false;
+    }
+    
+    // Set up dialog handler to auto-accept confirmation
+    console.log('🗑️ Setting up dialog handler and removing all duplicates...');
+    page.on('dialog', async dialog => {
+      console.log(`✅ Dialog appeared: ${dialog.message()}`);
+      await dialog.accept();
+    });
+    
+    await removeAllBtn.click();
+    await page.waitForTimeout(5000); // Extra wait for removal and re-scan to complete
+    
+    // Second scan - should find no duplicates
+    console.log('🔍 Running second duplicate scan to verify complete removal...');
+    await page.locator('#findDuplicates').click();
+    await page.waitForTimeout(3000);
+    
+    const finalGroupCount = await page.locator('.duplicate-group').count();
+    const duplicatesContent = await page.locator('#duplicatesList').textContent();
+    
+    console.log(`📊 Duplicate groups after removal: ${finalGroupCount}`);
+    console.log('📄 Final scan result:', duplicatesContent.substring(0, 100) + '...');
+    
+    // Should have no duplicate groups and show "No duplicate bookmarks found" message
+    if (finalGroupCount !== 0) {
+      console.log(`❌ Expected 0 duplicate groups after removal, found ${finalGroupCount}`);
+      return false;
+    }
+    
+    const hasNoDuplicatesMessage = duplicatesContent.includes('No duplicate bookmarks found');
+    if (!hasNoDuplicatesMessage) {
+      console.log('❌ Expected "No duplicate bookmarks found" message after removal');
+      return false;
+    }
+    
+    console.log('✅ Duplicate removal verification - Remove All completed successfully');
+    console.log(`   Initial groups: ${initialGroupCount}, Final groups: ${finalGroupCount}`);
+    console.log('   ✅ "No duplicate bookmarks found" message displayed correctly');
+    
+    await cleanupAllTestBookmarks(context);
+    return true;
+
+  } catch (error) {
+    await captureFailureScreenshot(page, 'duplicate-removal-verification-all', error);
+    return false;
+  } finally {
+    if (context) {
+      await context.close();
+    }
+  }
+}
+
 // Test runner
 async function runDuplicateFinderTests() {
   console.log('🎯 Running Duplicate Finder Feature Tests');
@@ -254,7 +448,9 @@ async function runDuplicateFinderTests() {
     { name: 'Duplicate Detection', fn: testDuplicateDetection },
     { name: 'Duplicate Removal Controls', fn: testDuplicateRemovalControls },
     { name: 'No Duplicates Scenario', fn: testNoDuplicatesScenario },
-    { name: 'Button States', fn: testDuplicatesButtonStates }
+    { name: 'Button States', fn: testDuplicatesButtonStates },
+    { name: 'Duplicate Removal Verification - Remove Selected', fn: testDuplicateRemovalVerificationSelected },
+    { name: 'Duplicate Removal Verification - Remove All', fn: testDuplicateRemovalVerificationAll }
   ];
   
   let passed = 0;

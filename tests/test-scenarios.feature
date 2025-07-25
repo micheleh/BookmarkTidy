@@ -116,6 +116,54 @@ Feature: BookmarkTidy Extension - Complete Test Coverage
     And I should see multiple checkboxes in checked state
     And I clean up the test bookmarks after testing
 
+  Scenario: Duplicate Removal Verification - Remove Selected
+    Given I have bookmarks with multiple duplicate groups
+    | Title | URL |
+    | Google - First | https://www.google.com |
+    | Google - Duplicate | https://www.google.com |
+    | GitHub - Original | https://github.com |
+    | GitHub - Copy | https://github.com |
+    | Example Site | https://example.com |
+    | Example Copy | https://example.com |
+    | Stack Overflow - Main | https://stackoverflow.com |
+    | Stack Overflow - Dup | https://stackoverflow.com |
+    When I navigate to the "Duplicate Finder" tab
+    And I click the "Find Duplicates" button
+    And I wait for the scanning to complete
+    Then I should see exactly 4 duplicate URL groups
+    When I select duplicates from only 2 of the groups (partial selection)
+    And I click the "Remove Selected" button
+    And I wait for the removal to complete
+    Then the selected duplicate bookmarks should be removed from the browser
+    When I click the "Find Duplicates" button again
+    And I wait for the scanning to complete
+    Then I should see exactly 2 duplicate URL groups remaining
+    And the removed duplicate groups should not appear in the results
+    And the unselected duplicate groups should still be present
+    And I clean up the test bookmarks after testing
+
+  Scenario: Duplicate Removal Verification - Remove All Duplicates
+    Given I have bookmarks with known duplicates in the browser
+    | Title | URL |
+    | Google - First | https://www.google.com |
+    | Google - Duplicate | https://www.google.com |
+    | GitHub - Original | https://github.com |
+    | GitHub - Copy | https://github.com |
+    | Example Site | https://example.com |
+    | Example Duplicate | https://example.com |
+    When I navigate to the "Duplicate Finder" tab
+    And I click the "Find Duplicates" button
+    And I wait for the scanning to complete
+    Then I should see exactly 3 duplicate URL groups
+    When I click the "Remove All Duplicates" button
+    And I wait for the removal to complete
+    Then all duplicate bookmarks should be removed from the browser
+    When I click the "Find Duplicates" button again
+    And I wait for the scanning to complete
+    Then I should see the message "No duplicate bookmarks found!"
+    And no duplicate groups should be displayed
+    And I clean up the test bookmarks after testing
+
   Scenario: No Duplicates Found Scenario
     Given I have bookmarks without any duplicates in the browser
     | Title | URL |
