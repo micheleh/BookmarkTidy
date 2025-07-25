@@ -250,6 +250,53 @@ Feature: BookmarkTidy Extension - Complete Test Coverage
     And I should see multiple dead link checkboxes in checked state
     And I clean up the test bookmarks after testing
 
+  Scenario: Dead Link Removal Verification - Remove Selected
+    Given I have bookmarks with a mix of working and dead links
+    | Title | URL | Expected Status |
+    | Google (Working) | https://www.google.com | Working |
+    | GitHub (Working) | https://github.com | Working |
+    | Example.com (Working) | https://example.com | Working |
+    | Non-existent Domain 1 | https://this-domain-definitely-does-not-exist-12345.com | Dead |
+    | Non-existent Domain 2 | https://completely-fake-website-xyz-999.net | Dead |
+    | Invalid TLD | https://invalid.invalidtld | Dead |
+    | 404 Test URL | https://httpstat.us/404 | Dead |
+    When I navigate to the "Dead Link Checker" tab
+    And I click the "Check Dead Links" button
+    And I wait for the link checking to complete (up to 60 seconds)
+    Then I should see some dead links detected in the initial scan
+    When I select only some of the dead links for removal (partial selection)
+    And I click the "Remove Selected" button
+    And I wait for the removal to complete
+    Then the selected dead link bookmarks should be removed from the browser
+    When I click the "Check Dead Links" button again
+    And I wait for the link checking to complete
+    Then I should see fewer dead links than in the initial scan
+    And the removed dead links should not appear in the results
+    And the unselected dead links should still be present
+    And the working links should remain unchanged
+    And I clean up the test bookmarks after testing
+
+  Scenario: Dead Link Removal Verification - Remove All Dead Links
+    Given I have bookmarks with only dead links
+    | Title | URL |
+    | Non-existent Domain 1 | https://this-domain-definitely-does-not-exist-12345.com |
+    | Non-existent Domain 2 | https://completely-fake-website-xyz-999.net |
+    | Invalid TLD | https://invalid.invalidtld |
+    | 404 Test URL | https://httpstat.us/404 |
+    | 500 Error Test | https://httpstat.us/500 |
+    When I navigate to the "Dead Link Checker" tab
+    And I click the "Check Dead Links" button
+    And I wait for the link checking to complete (up to 60 seconds)
+    Then I should see dead links detected in the initial scan
+    When I click the "Remove All Dead Links" button
+    And I wait for the removal to complete
+    Then all dead link bookmarks should be removed from the browser
+    When I click the "Check Dead Links" button again
+    And I wait for the link checking to complete
+    Then I should see the message "All links are working!" or "No bookmarks with URLs found!"
+    And no dead links should be displayed
+    And I clean up the test bookmarks after testing
+
   # ========================================
   # ERROR HANDLING AND EDGE CASES
   # ========================================
