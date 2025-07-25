@@ -195,32 +195,35 @@ async function cleanupBookmarks(context, bookmarkUrls = [], bookmarkTitles = [])
   await backgroundPage.evaluate(async ({ urls, titles }) => {
     return new Promise((resolve) => {
       chrome.bookmarks.search({}, (bookmarks) => {
-        const testBookmarks = bookmarks.filter(bookmark => {
-          if (!bookmark.url) return false;
+        const testItems = bookmarks.filter(bookmark => {
+          // Match bookmarks by URL
+          if (bookmark.url) {
+            const urlMatch = urls.some(url => 
+              bookmark.url.includes(url) || url.includes(bookmark.url)
+            );
+            if (urlMatch) return true;
+          }
           
-          // Match by URL
-          const urlMatch = urls.some(url => 
-            bookmark.url.includes(url) || url.includes(bookmark.url)
-          );
-          
-          // Match by title
+          // Match by title (both bookmarks and folders)
           const titleMatch = titles.some(title => 
             bookmark.title && bookmark.title.includes(title)
           );
           
-          return urlMatch || titleMatch;
+          return titleMatch;
         });
 
-        if (testBookmarks.length === 0) {
+        if (testItems.length === 0) {
           resolve();
           return;
         }
 
         let removed = 0;
-        testBookmarks.forEach(bookmark => {
-          chrome.bookmarks.remove(bookmark.id, () => {
+        testItems.forEach(item => {
+          // Use removeTree for folders to remove all children
+          const removeFunction = item.url ? chrome.bookmarks.remove : chrome.bookmarks.removeTree;
+          removeFunction(item.id, () => {
             removed++;
-            if (removed === testBookmarks.length) {
+            if (removed === testItems.length) {
               resolve();
             }
           });

@@ -9,7 +9,8 @@ const tests = {
   'dead-links': 'e2e/test-dead-links.js',
   'dead-links-simple': 'e2e/test-simple.js',
   'monitor': 'e2e/monitor-extension.js',
-  'add-bookmarks': 'e2e/add-test-bookmarks.js'
+  'add-bookmarks': 'e2e/add-test-bookmarks.js',
+  'automatic-background': '__tests__/features/automatic-background.test.js'
 };
 
 function runTest(testName) {
