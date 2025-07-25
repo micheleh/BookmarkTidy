@@ -3,7 +3,7 @@
  * Tests the Settings Integration with Background Features scenario
  */
 
-const { launchExtensionBrowser, navigateToOptionsPage, captureFailureScreenshot } = require('../../test-utils/extension-helpers');
+const { launchExtensionBrowser, navigateToOptionsPage, captureFailureScreenshot, cleanupSuccessArtifacts } = require('../../test-utils/extension-helpers');
 const { addBookmarks, cleanupBookmarks, BOOKMARK_SETS } = require('../../test-utils/bookmark-fixtures');
 
 /**
@@ -284,6 +284,10 @@ async function testSettingsIntegrationWithBackgroundFeatures() {
     }
     
     console.log('✅ Settings Integration with Background Features test completed');
+    
+    // Clean up old artifacts since test passed
+    await cleanupSuccessArtifacts();
+    
     return true;
     
   } catch (error) {

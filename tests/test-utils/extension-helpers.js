@@ -5,6 +5,8 @@
 
 const { chromium } = require('playwright');
 const path = require('path');
+const fs = require('fs').promises;
+const { existsSync } = require('fs');
 
 /**
  * Launch browser with BookmarkTidy extension loaded
@@ -154,6 +156,89 @@ async function waitForExtensionLoad(context, timeout = 5000) {
 }
 
 /**
+ * Clean up old artifact files
+ * @param {number} maxFiles - Maximum number of files to keep (default: 5)
+ */
+async function cleanupOldArtifacts(maxFiles = 5) {
+  const artifactsDir = path.join(__dirname, '..', 'artifacts');
+  
+  if (!existsSync(artifactsDir)) {
+    return;
+  }
+  
+  try {
+    const files = await fs.readdir(artifactsDir);
+    const screenshotFiles = files
+      .filter(file => file.endsWith('.png') && file.includes('-failure-'))
+      .map(file => ({
+        name: file,
+        path: path.join(artifactsDir, file),
+        time: extractTimestampFromFilename(file)
+      }))
+      .filter(file => file.time) // Only files with valid timestamps
+      .sort((a, b) => b.time - a.time); // Sort by newest first
+    
+    if (screenshotFiles.length > maxFiles) {
+      const filesToDelete = screenshotFiles.slice(maxFiles);
+      
+      console.log(`🧹 Cleaning up ${filesToDelete.length} old artifact files...`);
+      
+      for (const file of filesToDelete) {
+        try {
+          await fs.unlink(file.path);
+          console.log(`   Removed: ${file.name}`);
+        } catch (error) {
+          console.log(`   Failed to remove ${file.name}: ${error.message}`);
+        }
+      }
+      
+      console.log(`✅ Artifact cleanup completed. Kept ${Math.min(maxFiles, screenshotFiles.length)} most recent files.`);
+    }
+  } catch (error) {
+    console.log(`⚠️  Failed to cleanup artifacts: ${error.message}`);
+  }
+}
+
+/**
+ * Extract timestamp from filename for sorting
+ * @param {string} filename - The filename to extract timestamp from
+ * @returns {number|null} Timestamp in milliseconds or null if not found
+ */
+function extractTimestampFromFilename(filename) {
+  // Extract timestamp from format: test-name-failure-2025-07-24T20-07-43-797Z.png
+  const match = filename.match(/-failure-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.png$/);
+  if (match) {
+    try {
+      // Convert back to ISO format and parse
+      const isoString = match[1].replace(/-/g, (match, offset) => {
+        // Replace all but the first 4 dashes with colons and dots appropriately
+        if (offset < 10) return match; // Keep date dashes
+        if (offset === 10) return 'T'; // T separator
+        if (offset < 16) return ':'; // Time colons  
+        if (offset === 16) return ':'; // Time colon
+        if (offset === 19) return '.'; // Millisecond dot
+        return match;
+      });
+      const correctedIso = isoString.replace(/T(\d{2}):(\d{2}):(\d{2}):(\d{3})/, 'T$1:$2:$3.$4');
+      return new Date(correctedIso).getTime();
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Clean up artifacts for successful tests (optional)
+ * Only keeps failure screenshots
+ */
+async function cleanupSuccessArtifacts() {
+  // For now, we only clean up old failure screenshots
+  // Could be extended to remove other temporary files if needed
+  await cleanupOldArtifacts(5);
+}
+
+/**
  * Take screenshot on test failure
  * @param {Object} page - Playwright page
  * @param {string} testName - Name of the test
@@ -167,6 +252,9 @@ async function captureFailureScreenshot(page, testName, error) {
   try {
     await page.screenshot({ path: filepath, fullPage: true });
     console.log(`📸 Failure screenshot saved: ${filepath}`);
+    
+    // Clean up old artifacts after taking a new failure screenshot
+    await cleanupOldArtifacts(5);
   } catch (screenshotError) {
     console.log(`❌ Failed to capture screenshot: ${screenshotError.message}`);
   }
@@ -180,5 +268,7 @@ module.exports = {
   navigateToOptionsPage,
   navigateToPopupPage,
   waitForExtensionLoad,
-  captureFailureScreenshot
+  captureFailureScreenshot,
+  cleanupOldArtifacts,
+  cleanupSuccessArtifacts
 };
